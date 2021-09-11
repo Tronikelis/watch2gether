@@ -1,13 +1,27 @@
 import { Container, Center, CircularProgress } from "@chakra-ui/react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import ReactPlayer from "react-player/lazy";
-
+import { validate } from "uuid";
+import { useHistory } from "react-router";
 
 export default function Room() {
 
+    
     const playerRef = useRef<ReactPlayer>(null);
-
     const [playing, setPlaying] = useState(false);
+
+    // react-router-dom hook
+    const history = useHistory();
+
+    // validate this room
+    useEffect(() => {
+        const { pathname } = history.location;
+        const path = pathname.replace(/room/g, "");
+
+        if (!validate(path)) {
+            history.push("/404");
+        };
+    }, []);
 
     // lifecycle
     const handlePause = () => {
@@ -19,19 +33,10 @@ export default function Room() {
         );
         console.log(time)
     };
-    const handleSkip = () => {
-        // TODO handle handle the skipping
-        console.log("resumed");
-
-        const time = Math.floor(
-            playerRef.current?.getCurrentTime() ?? NaN
-        );
-        console.log(time);
-    };
 
     const handleFinishLoading = () => {
         // TODO send that I'm ready to play
-        console.log("Finished loading");
+        console.log("I can play the video now!");
 
         const time = Math.floor(
             playerRef.current?.getCurrentTime() ?? NaN
@@ -55,8 +60,6 @@ export default function Room() {
                     playing={playing}
 
                     onPause={handlePause}
-                    onBuffer={handleSkip}
-
                     onBufferEnd={handleFinishLoading}
                 />
             </Center>
