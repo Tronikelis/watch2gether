@@ -190,13 +190,10 @@ function VideoModal({ socket, id }: VideoModalProps) {
     const { open, setOpen } = useStore(store => store.modal);
     
     const [input, setInput] = useState("");
-    const [loading, setLoading] = useState(false);
 
     const toast = useToast();
 
     const handleSearch = async () => {
-        setLoading(true);
-
         // check if the url is valid
         const url = "https://" + input.split("://").pop();
         if (!validUrl(url)) {
@@ -213,8 +210,6 @@ function VideoModal({ socket, id }: VideoModalProps) {
         // emit the video to the sockets
         socket.emit("video room", { id, video: input } as SocketVideo);
         setVideo(input);
-
-        setLoading(false);
     };
 
     return (
@@ -237,8 +232,6 @@ function VideoModal({ socket, id }: VideoModalProps) {
                         <Button
                             onClick={handleSearch}
                             color="blue.400"
-                            isLoading={loading}
-                            err
                         >
                             Play
                         </Button>
