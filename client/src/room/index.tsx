@@ -30,35 +30,56 @@ interface SocketVideo {
     video: string;
 };
 
-export default function Room() {
-    // react player state
-    const playerRef = useRef<ReactPlayer>(null);
-    // const [playing, setPlaying] = useState(false);
-    // const [video, setVideo] = useState("https://youtu.be/lADBHDg-JtA");
-    const playing = useStore(store => store.state.playing);
-    const setPlaying = useStore(store => store.actions.setPlaying);
+// prevent skipping when syncing up
+// I don't like writing it here like this
+let canSkip = false;
+setTimeout(() => {
+    canSkip = true;
+}, 3000);
 
-    const video = useStore(store => store.state.video);
-    const setVideo = useStore(store => store.actions.setVideo);
-    
+export default function Room() {
     // react-router-dom hook
     const history = useHistory();
 
-    // room settings
-    const setUsers = useStore(store => store.actions.setUsers);
-    const roomId = useRef(history.location.pathname.replaceAll("/room/", ""));
+    /* ---------------------------------------------------------------------------------------------- */
+    /*                                    state/var related things                                    */
+    /* ---------------------------------------------------------------------------------------------- */
 
+    // react player ref
+    const playerRef = useRef<ReactPlayer>(null);
+    // is the player currently playing?
+    const playing = useStore(store => store.state.playing);
+    const setPlaying = useStore(store => store.actions.setPlaying);
+    // current playing video url
+    const video = useStore(store => store.state.video);
+    const setVideo = useStore(store => store.actions.setVideo);
     // make a reference out of video url
     const videoRef = useRef(video);
     useEffect(() => {
         videoRef.current = video;
     }, [video]);
 
+    // room settings
+    const setUsers = useStore(store => store.actions.setUsers);
+    const roomId = useRef(history.location.pathname.replaceAll("/room/", ""));
+
+    // helper things
+    const skipTo = (seconds: number) => {
+        playerRef.current?.seekTo(seconds);
+    };
+    const getTime = () => {
+        return playerRef.current?.getCurrentTime() ?? 0;
+    };
+
+    /* ---------------------------------------------------------------------------------------------- */
+    /*                                   socket.io logic, validation                                  */
+    /* ---------------------------------------------------------------------------------------------- */
+
     // validate this room
     useEffect(() => {
         if (!validate(roomId.current)) {
             history.push("/404");
-        };
+        }
     }, []);
 
     // socket io logic in here
@@ -67,7 +88,7 @@ export default function Room() {
 
         // try to join the room
         socket.emit("join room", id);
-        
+
         // current users
         socket.on("users room", (count: number) => {
             setUsers(prev => prev + count);
@@ -85,12 +106,12 @@ export default function Room() {
 
         // on skip seek to the video
         socket.on("skip room", ({ seconds }: SocketRoom) => {
-            playerRef.current?.seekTo(seconds);
+            skipTo(seconds);
         });
 
         // sync data with others
         socket.on("sync room", ({ socketId }: SocketSync) => {
-            const seconds = playerRef.current?.getCurrentTime() ?? 1;
+            const seconds = getTime();
             socket.emit("sync user", {
                 socketId,
                 seconds,
@@ -98,18 +119,22 @@ export default function Room() {
             } as SocketSync);
         });
         socket.on("sync user", ({ seconds, video }: SocketSync) => {
+            console.log("got sync", seconds);
             setVideo(video);
             if (!seconds) return;
 
-            playerRef.current?.seekTo(seconds);
+            skipTo(seconds);
         });
 
         // changing videos
         socket.on("video room", ({ video }: SocketVideo) => {
             setVideo(video);
         });
-
     }, []);
+
+    /* ---------------------------------------------------------------------------------------------- */
+    /*                                       socket.io lifecycle                                      */
+    /* ---------------------------------------------------------------------------------------------- */
 
     // synchronization with the new user
     const handleStart = () => {
@@ -117,13 +142,12 @@ export default function Room() {
         const id = roomId.current;
         socket.emit("sync room", { socketId: socket.id, id } as SocketSync);
     };
-
     // lifecycle
     const handlePause = () => {
         console.log("Paused!");
 
         const id = roomId.current;
-        socket.emit("pause room", id);;
+        socket.emit("pause room", id);
 
         setPlaying(false);
     };
@@ -132,52 +156,46 @@ export default function Room() {
 
         const id = roomId.current;
         socket.emit("resume room", id);
-       
+
         setPlaying(true);
     };
     const handleSkip = () => {
+        if (!canSkip) return;
         console.log("skipped");
-        
+
         const id = roomId.current;
-        const seconds = playerRef.current?.getCurrentTime() ?? 1;
+        const seconds = getTime();
         socket.emit("skip room", { id, seconds } as SocketRoom);
     };
 
-    return (<>
-        {/** modal for adding videos */}
-        <VideoModal socket={socket} id={roomId.current}/>
+    return (
+        <>
+            {/** modal for adding videos */}
+            <VideoModal socket={socket} id={roomId.current} />
 
-        <Container
-            maxH="100vh"
-            h="100vh"
-            w="100vw"
-            maxW="100vw"
-            overflow="hidden"
-        >
-            <Layout>
-                <AspectRatio ratio={16 / 9} w="full" h="full">
-                    <ReactPlayer
-                        ref={playerRef}
-                        fallback={<CircularProgress isIndeterminate />}
-                        url={video}
-                        controls={true}
-                        muted={true}
-                        width="100%"
-                        height="100%"
-                        
-                        playing={playing}
-                        onReady={handleStart}
-
-                        onPause={handlePause}
-                        onPlay={handleResume}
-                        onBuffer={handleSkip}
-
-                        onProgress={prog => console.log(prog)}
-                    />
-                </AspectRatio>
-            </Layout>
-        </Container>
-    </>);
+            <Container maxH="100vh" h="100vh" w="100vw" maxW="100vw" overflow="hidden">
+                <Layout>
+                    <AspectRatio ratio={16 / 9} w="full" h="full">
+                        <ReactPlayer
+                            ref={playerRef}
+                            fallback={<CircularProgress isIndeterminate />}
+                            url={video}
+                            controls={true}
+                            muted={true}
+                            width="100%"
+                            height="100%"
+                            playing={playing}
+                            onReady={handleStart}
+                            onPause={handlePause}
+                            onPlay={handleResume}
+                            onBuffer={handleSkip}
+                            onProgress={prog => console.log(prog)}
+                        />
+                    </AspectRatio>
+                </Layout>
+            </Container>
+        </>
+    );
 };
 
 interface VideoModalProps {
