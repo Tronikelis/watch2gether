@@ -3,6 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 import morgan from "morgan";
 import fallback from "express-history-api-fallback";
+import cors from "cors";
 
 import io from "./io";
 import routes from "./routes";

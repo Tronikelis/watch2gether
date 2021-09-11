@@ -1,10 +1,16 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Container, Center, CircularProgress } from "@chakra-ui/react";
-import { useRef, useState, useEffect } from "react";
+import {
+    Container, CircularProgress, AspectRatio, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Input, ModalFooter, Button, HStack, useToast
+} from "@chakra-ui/react";
+import { useRef, useEffect, useState } from "react";
 import ReactPlayer from "react-player/lazy";
 import { validate } from "uuid";
 import { useHistory } from "react-router";
-import io from "socket.io-client";
+import io, { Socket } from "socket.io-client";
+import axios from "axios";
+
+import { useStore } from "./store";
+import Layout from "./layout";
 
 // initiate client socket
 const socket = io();
@@ -18,17 +24,27 @@ interface SocketSync {
     socketId: string;
     seconds?: number;
 };
+interface SocketVideo {
+    id: string;
+    video: string;
+};
 
 export default function Room() {
     // react player state
     const playerRef = useRef<ReactPlayer>(null);
-    const [playing, setPlaying] = useState(false);
+    // const [playing, setPlaying] = useState(false);
+    // const [video, setVideo] = useState("https://youtu.be/lADBHDg-JtA");
+    const playing = useStore(store => store.state.playing);
+    const setPlaying = useStore(store => store.actions.setPlaying);
+
+    const video = useStore(store => store.state.video);
+    const setVideo = useStore(store => store.actions.setVideo);
     
     // react-router-dom hook
     const history = useHistory();
 
     // room settings
-    const [users, setUsers] = useState(1);
+    const setUsers = useStore(store => store.actions.setUsers);
     const roomId = useRef(history.location.pathname.replaceAll("/room/", ""));
 
     // validate this room
@@ -80,9 +96,12 @@ export default function Room() {
             playerRef.current?.seekTo(seconds);
         });
 
-    }, []);
+        // changing videos
+        socket.on("video room", ({ video }: SocketVideo) => {
+            setVideo(video);
+        });
 
-    // get user to interact with the page so it can autoplay
+    }, []);
 
     // synchronization with the new user
     const handleStart = () => {
@@ -116,30 +135,112 @@ export default function Room() {
         socket.emit("skip room", { id, seconds } as SocketRoom);
     };
 
-    return (
+    return (<>
+        {/** modal for adding videos */}
+        <VideoModal socket={socket} id={roomId.current}/>
+
         <Container
             maxH="100vh"
             h="100vh"
             w="100vw"
             maxW="100vw"
+            overflow="hidden"
         >
-            <Center h="full" w="full">
-                {users}
-                <ReactPlayer
-                    ref={playerRef}
-                    fallback={<CircularProgress isIndeterminate />}
-                    url="https://youtu.be/lADBHDg-JtA"
-                    controls={true}
-                    muted={true}
-                    
-                    playing={playing}
-                    onReady={handleStart}
+            <Layout>
+                <AspectRatio ratio={16 / 9} w="full" h="full">
+                    <ReactPlayer
+                        ref={playerRef}
+                        fallback={<CircularProgress isIndeterminate />}
+                        url={video}
+                        controls={true}
+                        muted={true}
+                        width="100%"
+                        height="100%"
+                        
+                        playing={playing}
+                        onReady={handleStart}
 
-                    onPause={handlePause}
-                    onPlay={handleResume}
-                    onBuffer={handleSkip}
-                />
-            </Center>
+                        onPause={handlePause}
+                        onPlay={handleResume}
+                        onBuffer={handleSkip}
+
+                        onProgress={prog => console.log(prog)}
+                    />
+                </AspectRatio>
+            </Layout>
         </Container>
+    </>);
+};
+
+interface VideoModalProps {
+    socket: Socket;
+    id: string;
+};
+
+function VideoModal({ socket, id }: VideoModalProps) {
+    const setVideo = useStore(store => store.actions.setVideo);
+    const { open, setOpen } = useStore(store => store.modal);
+    
+    const [input, setInput] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const toast = useToast();
+
+    const handleSearch = async () => {
+        setLoading(true);
+
+        // check if the url is valid
+        const url = "https://" + input.split("://").pop();
+        await axios.post("/room/video/validate", { url }).catch(err => {
+            setLoading(false);
+            toast({
+                title: "Denied",
+                description: "The supplied url is invalid",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            throw err;
+        });
+
+        // emit the video to the sockets
+        socket.emit("video room", { id, video: input } as SocketVideo);
+        setVideo(input);
+
+        setLoading(false);
+    };
+
+    return (
+        <Modal isOpen={open} onClose={() => setOpen(false)}>
+            <ModalOverlay />
+            <ModalContent>
+                <ModalCloseButton />
+                <ModalHeader>Input video url</ModalHeader>
+
+                <ModalBody>
+                    <Input
+                        placeholder="Url"
+                        value={input}
+                        onChange={e => setInput(e.target.value)}
+                    />
+                </ModalBody>
+
+                <ModalFooter>
+                    <HStack spacing="3">
+                        <Button
+                            onClick={handleSearch}
+                            color="blue.400"
+                            isLoading={loading}
+                            err
+                        >
+                            Play
+                        </Button>
+                        <Button onClick={() => setOpen(false)}>
+                            Close
+                        </Button>
+                    </HStack>
+                </ModalFooter>
+            </ModalContent>
+        </Modal>
     );
 };

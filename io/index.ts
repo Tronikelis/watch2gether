@@ -9,6 +9,10 @@ interface SocketSync {
     socketId: string;
     seconds?: number;
 };
+interface SocketVideo {
+    id: string;
+    video: string;
+};
 
 export default function (io: Server) {
     io.on("connection", (socket) => {
@@ -67,6 +71,11 @@ export default function (io: Server) {
         });
         socket.on("sync user", (data: SocketSync) => {
             io.to(data.socketId).emit("sync user", data);
+        });
+
+        // put in a new video into a room
+        socket.on("video room", (data: SocketVideo) => {
+            socket.to(data.id).emit("video room", data);
         });
     });
 };
