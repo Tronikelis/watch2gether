@@ -7,7 +7,7 @@ import ReactPlayer from "react-player/lazy";
 import { validate } from "uuid";
 import { useHistory } from "react-router";
 import io, { Socket } from "socket.io-client";
-import axios from "axios";
+import { isUri as validUrl } from "valid-url";
 
 import { useStore } from "./store";
 import Layout from "./layout";
@@ -23,6 +23,7 @@ interface SocketSync {
     id: string;
     socketId: string;
     seconds?: number;
+    video: string;
 };
 interface SocketVideo {
     id: string;
@@ -47,6 +48,12 @@ export default function Room() {
     const setUsers = useStore(store => store.actions.setUsers);
     const roomId = useRef(history.location.pathname.replaceAll("/room/", ""));
 
+    // make a reference out of video url
+    const videoRef = useRef(video);
+    useEffect(() => {
+        videoRef.current = video;
+    }, [video]);
+
     // validate this room
     useEffect(() => {
         if (!validate(roomId.current)) {
@@ -68,13 +75,11 @@ export default function Room() {
 
         // on pause stop playing the video
         socket.on("pause room", () => {
-            console.log("got pause");
             setPlaying(false);
         });
 
         // on resume start playing the video
         socket.on("resume room", () => {
-            console.log("got resume");
             setPlaying(true);
         });
 
@@ -89,10 +94,13 @@ export default function Room() {
             socket.emit("sync user", {
                 socketId,
                 seconds,
+                video: videoRef.current,
             } as SocketSync);
         });
-        socket.on("sync user", ({ seconds = 0 }: SocketSync) => {
-            console.log("got sync", seconds);
+        socket.on("sync user", ({ seconds, video }: SocketSync) => {
+            setVideo(video);
+            if (!seconds) return;
+
             playerRef.current?.seekTo(seconds);
         });
 
@@ -191,8 +199,7 @@ function VideoModal({ socket, id }: VideoModalProps) {
 
         // check if the url is valid
         const url = "https://" + input.split("://").pop();
-        await axios.post("/room/video/validate", { url }).catch(err => {
-            setLoading(false);
+        if (!validUrl(url)) {
             toast({
                 title: "Denied",
                 description: "The supplied url is invalid",
@@ -200,8 +207,8 @@ function VideoModal({ socket, id }: VideoModalProps) {
                 duration: 3000,
                 isClosable: true,
             });
-            throw err;
-        });
+            return;
+        };
 
         // emit the video to the sockets
         socket.emit("video room", { id, video: input } as SocketVideo);
