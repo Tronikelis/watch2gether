@@ -122,8 +122,9 @@ export default function Room() {
             console.log("got sync", seconds);
             setVideo(video);
             if (!seconds) return;
-
-            skipTo(seconds);
+            
+            const offset = 0.32; // offset for loading
+            skipTo(seconds + offset);
         });
 
         // changing videos
