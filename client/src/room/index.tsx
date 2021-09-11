@@ -33,7 +33,7 @@ interface SocketVideo {
 // prevent skipping when syncing up
 // I don't like writing it here like this
 let canSkip = false;
-setTimeout(() => {
+setInterval(() => {
     canSkip = true;
 }, 3000);
 
@@ -65,9 +65,11 @@ export default function Room() {
 
     // helper things
     const skipTo = (seconds: number) => {
+        canSkip = false;
         playerRef.current?.seekTo(seconds);
     };
     const getTime = () => {
+        canSkip = false;
         return playerRef.current?.getCurrentTime() ?? 0;
     };
 
@@ -119,11 +121,11 @@ export default function Room() {
             } as SocketSync);
         });
         socket.on("sync user", ({ seconds, video }: SocketSync) => {
-            console.log("got sync", seconds);
             setVideo(video);
             if (!seconds) return;
-            
-            const offset = 0.32; // offset for loading
+            console.log("got sync", seconds);
+
+            const offset = 0.38; // offset for loading
             skipTo(seconds + offset);
         });
 
@@ -169,34 +171,35 @@ export default function Room() {
         socket.emit("skip room", { id, seconds } as SocketRoom);
     };
 
-    return (
-        <>
-            {/** modal for adding videos */}
-            <VideoModal socket={socket} id={roomId.current} />
+    return (<>
+        {/** modal for adding videos */}
+        <VideoModal socket={socket} id={roomId.current} />
 
-            <Container maxH="100vh" h="100vh" w="100vw" maxW="100vw" overflow="hidden">
-                <Layout>
-                    <AspectRatio ratio={16 / 9} w="full" h="full">
-                        <ReactPlayer
-                            ref={playerRef}
-                            fallback={<CircularProgress isIndeterminate />}
-                            url={video}
-                            controls={true}
-                            muted={true}
-                            width="100%"
-                            height="100%"
-                            playing={playing}
-                            onReady={handleStart}
-                            onPause={handlePause}
-                            onPlay={handleResume}
-                            onBuffer={handleSkip}
-                            onProgress={prog => console.log(prog)}
-                        />
-                    </AspectRatio>
-                </Layout>
-            </Container>
-        </>
-    );
+        <Container maxH="100vh" h="100vh" w="100vw" maxW="100vw" overflow="hidden">
+            <Layout>
+                <AspectRatio ratio={16 / 9} w="full" h="full">
+                    <ReactPlayer
+                        ref={playerRef}
+                        fallback={<CircularProgress isIndeterminate />}
+                        url={video}
+                        controls={true}
+                        muted={true}
+                        width="100%"
+                        height="100%"
+                        playing={playing}
+                        // lifecycle shits
+                        onReady={handleStart}
+                        onPause={handlePause}
+                        onPlay={handleResume}
+                        onBuffer={handleSkip}
+                        onBufferEnd={handleSkip}
+
+                        onProgress={prog => console.log(prog)}
+                    />
+                </AspectRatio>
+            </Layout>
+        </Container>
+    </>);
 };
 
 interface VideoModalProps {
