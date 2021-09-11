@@ -19,6 +19,9 @@ export default function Entry() {
     const history = useHistory();
 
     const handleCreate = async () => {
+        // set that the user is active
+        sessionStorage.setItem("active", "true");
+
         setLoading(true);
         
         const { data } = await axios.post<AxiosRes>("/room/create");
@@ -74,6 +77,8 @@ function JoinModal ({ open, setOpen }: JoinModalProps) {
     const history = useHistory();
 
     const handleJoin = () => {
+        // set that the user is active
+        sessionStorage.setItem("active", "true");
         history.push(`/room/${input}`);
     };
 

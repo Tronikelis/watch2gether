@@ -1,9 +1,11 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Container, Center, CircularProgress } from "@chakra-ui/react";
 import { useRef, useState, useEffect } from "react";
 import ReactPlayer from "react-player/lazy";
 import { validate } from "uuid";
 import { useHistory } from "react-router";
 import io from "socket.io-client";
+
 // initiate client socket
 const socket = io();
 
@@ -43,7 +45,6 @@ export default function Room() {
         // try to join the room
         socket.emit("join room", id);
         
-
         // current users
         socket.on("users room", (count: number) => {
             setUsers(prev => prev + count);
@@ -80,6 +81,8 @@ export default function Room() {
         });
 
     }, []);
+
+    // get user to interact with the page so it can autoplay
 
     // synchronization with the new user
     const handleStart = () => {
@@ -127,9 +130,11 @@ export default function Room() {
                     fallback={<CircularProgress isIndeterminate />}
                     url="https://youtu.be/lADBHDg-JtA"
                     controls={true}
+                    muted={true}
+                    
                     playing={playing}
-
                     onReady={handleStart}
+
                     onPause={handlePause}
                     onPlay={handleResume}
                     onBuffer={handleSkip}
