@@ -1,15 +1,22 @@
 import create from "zustand";
 import produce from "immer";
 
+interface PlayerInfo {
+    played: number;
+    playedSeconds: number;
+    loaded: number;
+    loadedSeconds: number;
+};
+
 interface Store {
     state: {
-        playedSeconds: number;
+        playerInfo: PlayerInfo;
         video: string;
         playing: boolean;
         users: number;
     };
     actions: {
-        setPlayedSeconds: (secs: number) => void;
+        setPlayerInfo: (data: PlayerInfo) => void;
         setVideo: (url: string) => void;
         setPlaying: (type: boolean) => void;
         setUsers: (fn: (count: number) => number) => void;
@@ -22,14 +29,19 @@ interface Store {
 
 export const useStore = create<Store>(set => ({
     state: {
-        playedSeconds: 0,
+        playerInfo: {
+            loaded: 0,
+            loadedSeconds: 0,
+            played: 0,
+            playedSeconds: 0,
+        },
         video: "https://youtu.be/lADBHDg-JtA",
         playing: false,
         users: 1,
     },
     actions: {
-        setPlayedSeconds: secs => set(produce((clone: Store) => {
-            clone.state.playedSeconds = secs;
+        setPlayerInfo: data => set(produce((clone: Store) => {
+            clone.state.playerInfo = data;
         })),
         setVideo: url => set(produce((clone: Store) => {
             clone.state.video = url;

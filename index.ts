@@ -3,7 +3,8 @@ import http from "http";
 import { Server } from "socket.io";
 import morgan from "morgan";
 import fallback from "express-history-api-fallback";
-import cors from "cors";
+import compression from "compression";
+import helmet from "helmet";
 
 import io from "./io";
 import routes from "./routes";
@@ -21,6 +22,10 @@ const ioServer = new Server(server);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(morgan("dev"));
+app.use(compression());
+app.use(helmet({
+    contentSecurityPolicy: false,
+}));
 
 // initiate routes
 routes(app);

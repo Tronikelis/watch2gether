@@ -7,7 +7,7 @@ import ReactPlayer from "react-player/lazy";
 import { validate } from "uuid";
 import { useHistory } from "react-router";
 import io, { Socket } from "socket.io-client";
-import { isUri as validUrl } from "valid-url";
+import { isWebUri as isValidUrl } from "valid-url";
 
 import { useStore } from "./store";
 import Layout from "./layout";
@@ -53,14 +53,14 @@ export default function Room() {
     // current playing video url
     const video = useStore(store => store.state.video);
     const setVideo = useStore(store => store.actions.setVideo);
+    // dev info
+    const setPlayerInfo = useStore(store => store.actions.setPlayerInfo);
     // make a reference out of video url
     const videoRef = useRef(video);
     useEffect(() => {
         videoRef.current = video;
     }, [video]);
 
-    // room settings
-    const setUsers = useStore(store => store.actions.setUsers);
     const roomId = useRef(history.location.pathname.replaceAll("/room/", ""));
 
     // helper things
@@ -90,11 +90,6 @@ export default function Room() {
 
         // try to join the room
         socket.emit("join room", id);
-
-        // current users
-        socket.on("users room", (count: number) => {
-            setUsers(prev => prev + count);
-        });
 
         // on pause stop playing the video
         socket.on("pause room", () => {
@@ -194,7 +189,7 @@ export default function Room() {
                         onBuffer={handleSkip}
                         onBufferEnd={handleSkip}
 
-                        onProgress={prog => console.log(prog)}
+                        onProgress={data => setPlayerInfo(data)}
                     />
                 </AspectRatio>
             </Layout>
@@ -217,8 +212,7 @@ function VideoModal({ socket, id }: VideoModalProps) {
 
     const handleSearch = async () => {
         // check if the url is valid
-        const url = "https://" + input.split("://").pop();
-        if (!validUrl(url)) {
+        if (!isValidUrl(input)) {
             toast({
                 title: "Denied",
                 description: "The supplied url is invalid",

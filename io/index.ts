@@ -18,13 +18,6 @@ export default function (io: Server) {
     io.on("connection", (socket) => {
         console.log("Socket", socket.id, "connected");
 
-        // on disconnection
-        socket.on("disconnecting", () => {
-            socket.rooms.forEach(room => {
-                io.to(room).emit("users room", -1);
-            });
-        });
-
         // join/create a "w2g" room
         socket.on("join room", (id: string) => {
             console.log({
@@ -32,7 +25,6 @@ export default function (io: Server) {
                 room: id,
             });
             socket.join(id);
-            socket.to(id).emit("users room", 1);
         });
 
         // pause a room
