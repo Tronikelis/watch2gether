@@ -37,24 +37,14 @@ export default function (io: Server) {
             socket.to(id).emit("pause room");
         });
 
-        // resume a room
-        socket.on("resume room", (id: string) => {
-            console.log({
-                room: id,
-                type: "resume",
-                from: socket.id,
-            });
-            socket.to(id).emit("resume room");
-        });
-
         // skip a room
-        socket.on("skip room", (data: SocketRoom) => {
+        socket.on("play room", (data: SocketRoom) => {
             console.log({
                 room: data.id,
                 type: "skip",
                 from: socket.id,
             });
-            socket.to(data.id).emit("skip room", data);
+            socket.to(data.id).emit("play room", data);
         });
 
         // sync a room

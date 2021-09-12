@@ -12,6 +12,8 @@ import { isWebUri as isValidUrl } from "valid-url";
 import { useStore } from "./store";
 import Layout from "./layout";
 
+const SYNC_POW = 2;
+
 // initiate client socket
 const socket = io();
 
@@ -50,7 +52,7 @@ export default function Room() {
     const setPlayerInfo = useStore(store => store.actions.setPlayerInfo);
     // make a reference out of video url
     const videoRef = useRef(video);
-    
+
     useEffect(() => {
         videoRef.current = video;
     }, [video]);
@@ -85,16 +87,16 @@ export default function Room() {
 
         // on pause stop playing the video
         socket.on("pause room", () => {
-            setPlaying(false);
+            if (playing) setPlaying(false);
         });
 
-        // on resume start playing the video
-        socket.on("resume room", () => {
-            setPlaying(true);
-        });
+        // on play seek to the video
+        socket.on("play room", ({ seconds }: SocketRoom) => {
+            if (!playing) setPlaying(true);
+            // ! compare the times, so that we don't do unnecessary skipping        
+            const approx = Math.abs(getTime() - seconds) < SYNC_POW;
+            if (approx) return;
 
-        // on skip seek to the video
-        socket.on("skip room", ({ seconds }: SocketRoom) => {
             skipTo(seconds);
         });
 
@@ -113,7 +115,8 @@ export default function Room() {
             console.log("got sync", seconds);
 
             const offset = 0.38; // offset for loading
-            skipTo(seconds + offset);
+            // skipTo(seconds + offset);
+            setTimeout(() => skipTo(seconds + offset), 150);
         });
 
         // changing videos
@@ -134,27 +137,19 @@ export default function Room() {
     };
     // lifecycle
     const handlePause = () => {
+        setPlaying(false);
         console.log("Paused!");
 
         const id = roomId.current;
         socket.emit("pause room", id);
-
-        setPlaying(false);
     };
-    const handleResume = () => {
-        console.log("Resumed!");
-
-        const id = roomId.current;
-        socket.emit("resume room", id);
-
+    const handlePlay = () => {
         setPlaying(true);
-    };
-    const handleSkip = () => {
         console.log("skipped");
 
         const id = roomId.current;
         const seconds = getTime();
-        socket.emit("skip room", { id, seconds } as SocketRoom);
+        socket.emit("play room", { id, seconds } as SocketRoom);
     };
 
     return (<>
@@ -175,10 +170,10 @@ export default function Room() {
                         playing={playing}
                         // lifecycle shits
                         onReady={handleStart}
-                        onPause={handlePause}
-                        onPlay={handleResume}
-                        onBuffer={handleSkip}
 
+                        onPlay={handlePlay}
+                        onPause={handlePause}
+                        // onBufferEnd={handleSkipThrottled}
                         onProgress={data => setPlayerInfo(data)}
                     />
 

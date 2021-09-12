@@ -49,7 +49,7 @@ export const useStore = create<Store>(set => ({
         setPlaying: type => set(produce((clone: Store) => {
             clone.state.playing = type;
         })),
-        setUsers: fn => set(state => produce((clone: Store) => {
+        setUsers: fn => set(produce((clone: Store) => {
             clone.state.users = fn(clone.state.users);
         })),
     },
