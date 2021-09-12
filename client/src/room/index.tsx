@@ -12,6 +12,7 @@ import { isWebUri as isValidUrl } from "valid-url";
 import { useStore } from "./store";
 import Layout from "./layout";
 
+// every client must be within 2 seconds
 const SYNC_POW = 2;
 
 // initiate client socket
@@ -87,7 +88,7 @@ export default function Room() {
 
         // on pause stop playing the video
         socket.on("pause room", () => {
-            if (playing) setPlaying(false);
+            setPlaying(false);
         });
 
         // on play seek to the video

@@ -17,7 +17,6 @@
     "axios": "^0.21.4",
     "framer-motion": "^4",
     "immer": "^9.0.6",
-    "lodash": "^4.17.21",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-player": "^2.9.0",
@@ -56,7 +55,6 @@
     ]
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.172",
     "@types/react-router-dom": "^5.1.8",
     "@types/uuid": "^8.3.1",
     "@types/valid-url": "^1.0.3"
