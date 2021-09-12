@@ -1,5 +1,5 @@
 import {
-    Center, Box, Text, Spacer, IconButton, Flex, AspectRatio
+    Center, Box, Text, IconButton, Flex, AspectRatio
 } from "@chakra-ui/react";
 import { SearchIcon } from "@chakra-ui/icons";
 import styled from "@emotion/styled";
