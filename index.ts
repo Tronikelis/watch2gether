@@ -10,7 +10,7 @@ import io from "./io";
 import routes from "./routes";
 
 // dynamic variables
-const port = process.env.PORT ?? 3000;
+const port = process.env.PORT ?? 3001;
 const root = "./client/build";
 
 // initiate server things

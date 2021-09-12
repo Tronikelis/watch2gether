@@ -18,6 +18,7 @@ export default function Entry() {
     // for redirecting
     const history = useHistory();
 
+    // get the id from the server and redirect to it
     const handleCreate = async () => {
         setLoading(true);
         

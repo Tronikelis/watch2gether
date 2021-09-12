@@ -2,10 +2,10 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
 
-import theme from "./theme";
+import theme from "../theme";
 
-const Entry = lazy(() => import("./entry"));
-const Room = lazy(() => import("./room"));
+const Entry = lazy(() => import("../pages/entry"));
+const Room = lazy(() => import("../pages/room"));
 
 export default function Routes() {
     return (
