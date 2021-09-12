@@ -30,13 +30,6 @@ interface SocketVideo {
     video: string;
 };
 
-// prevent skipping when syncing up
-// I don't like writing it here like this
-let canSkip = false;
-setInterval(() => {
-    canSkip = true;
-}, 3000);
-
 export default function Room() {
     // react-router-dom hook
     const history = useHistory();
@@ -57,6 +50,7 @@ export default function Room() {
     const setPlayerInfo = useStore(store => store.actions.setPlayerInfo);
     // make a reference out of video url
     const videoRef = useRef(video);
+    
     useEffect(() => {
         videoRef.current = video;
     }, [video]);
@@ -65,11 +59,9 @@ export default function Room() {
 
     // helper things
     const skipTo = (seconds: number) => {
-        canSkip = false;
         playerRef.current?.seekTo(seconds);
     };
     const getTime = () => {
-        canSkip = false;
         return playerRef.current?.getCurrentTime() ?? 0;
     };
 
@@ -158,7 +150,6 @@ export default function Room() {
         setPlaying(true);
     };
     const handleSkip = () => {
-        if (!canSkip) return;
         console.log("skipped");
 
         const id = roomId.current;
@@ -187,10 +178,10 @@ export default function Room() {
                         onPause={handlePause}
                         onPlay={handleResume}
                         onBuffer={handleSkip}
-                        onBufferEnd={handleSkip}
 
                         onProgress={data => setPlayerInfo(data)}
                     />
+
                 </AspectRatio>
             </Layout>
         </Container>

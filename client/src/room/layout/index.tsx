@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import {
-    Center, Box, Text, Spacer, IconButton, Flex, Divider
+    Center, Box, Text, Spacer, IconButton, Flex
 } from "@chakra-ui/react";
 import { SearchIcon } from "@chakra-ui/icons";
 import styled from "@emotion/styled";
@@ -37,7 +37,7 @@ export default function Layout({ children }: LayoutProps) {
                     <Flex direction="column" h="full" w="full">
                         <Center w="full" h="10%">
                             {/** playing another video */}
-                            <Flex padding="10px" w="full">
+                            <Flex padding="10px" w="full" wrap="wrap">
                                 <Text fontSize="xl" fontWeight="bold">Search video</Text>
                                 <Spacer />
                                 <IconButton
