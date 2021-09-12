@@ -1,10 +1,15 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import {
     Center, Box, Text, IconButton, Flex, AspectRatio
 } from "@chakra-ui/react";
+import { useEffect } from "react";
+import { validate } from "uuid";
 import { SearchIcon } from "@chakra-ui/icons";
 import styled from "@emotion/styled";
 import TextTransition from "react-text-transition";
+import { useHistory } from "react-router";
 
+import { roomId } from "../../shared";
 import { useStore } from "./store";
 import VideoPlayer from "./components/video-player";
 import VideoModal from "./components/video-modal";
@@ -18,7 +23,17 @@ const LayoutContainer = styled.div`
     flex-wrap: wrap;
 `;
 
-export default function Layout() {
+export default function RoomEntry() {
+    const history = useHistory();
+    
+    // validate the room and copy the code
+    useEffect(() => {
+        // validate this room
+        if (!validate(roomId)) {
+            history.push("/404");
+        };
+    }, []);
+
     return (
         <Center
             maxH="100vh"

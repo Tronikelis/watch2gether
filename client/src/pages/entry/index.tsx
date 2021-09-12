@@ -1,19 +1,28 @@
-import { Dispatch, SetStateAction, useState } from "react";
-import {
-    Container, Center, HStack, Button, Modal, ModalContent, ModalFooter, ModalOverlay, ModalHeader,ModalCloseButton, ModalBody, Input
-} from "@chakra-ui/react"
+import { useState } from "react";
+import { Container, Button, Flex, Text } from "@chakra-ui/react"
+import TextTransition from "react-text-transition";
 import axios from "axios";
 import { useHistory } from "react-router-dom";
+import useInterval from "react-useinterval";
 
 interface AxiosRes {
     id: string;
 };
 
+const noWords = [
+    "BS",
+    "Ads",
+    "Tracking",
+    "Fuckery",
+    "Crap",
+    "Nonsense",
+];
+
 export default function Entry() {
-    // join room modal state
-    const [open, setOpen] = useState(false);
     // button disabled state
     const [loading, setLoading] = useState(false);
+    // nice text animation
+    const [index, setIndex] = useState(0);
 
     // for redirecting
     const history = useHistory();
@@ -28,6 +37,11 @@ export default function Entry() {
         setLoading(false);
     };
 
+    // change the text index once 3 seconds
+    useInterval(() => {
+        setIndex(prev => (prev + 1) % noWords.length);
+    }, 2000);
+
     return (<>
         <Container
             maxH="100vh"
@@ -35,81 +49,32 @@ export default function Entry() {
             w="100vw"
             maxW="100vw"
         >
-            <Center h="full" w="full">
-                <HStack spacing="4">
-
-                    <Button 
-                        color="purple.400" 
-                        size="lg"
-                        onClick={() => setOpen(true)}
-                    >
-                        Join
-                    </Button>
-
-                    <Button
-                        color="blue.400"
-                        size="lg"
-                        onClick={handleCreate}
-                        isLoading={loading}
-                    >
-                        Create
-                    </Button>
-
-                    <JoinModal open={open} setOpen={setOpen} />
-
-                </HStack>
-            </Center>
+            <Flex
+                padding="60px"
+                w="full"
+                h="60%"
+                flexDir="column"
+                justifyContent="space-evenly"
+                alignItems="center"
+            >
+                <Text fontSize="5xl">
+                    No {" "}
+                    <TextTransition
+                        text={noWords[index]}
+                        direction="down"
+                        inline
+                    /> {" "}
+                    watch together
+                </Text>
+                <Button
+                    color="blue.400"
+                    size="lg"
+                    onClick={handleCreate}
+                    isLoading={loading}
+                >
+                    Create Room
+                </Button>
+            </Flex>
         </Container>
     </>);
-};
-
-interface JoinModalProps {
-    open: boolean;
-    setOpen: Dispatch<SetStateAction<boolean>>;
-};
-
-function JoinModal ({ open, setOpen }: JoinModalProps) {
-    // user's input
-    const [input, setInput] = useState("");
-    // for redirecting
-    const history = useHistory();
-
-    const handleJoin = () => {
-        history.push(`/room/${input}`);
-    };
-
-    return (
-        <Modal isOpen={open} onClose={() => setOpen(false)}>
-            <ModalOverlay />
-            <ModalContent>
-                <ModalCloseButton />
-
-                <ModalHeader>
-                    Join a room
-                </ModalHeader>
-
-                <ModalBody>
-                    <Input
-                        placeholder="Enter id"
-                        value={input}
-                        onChange={e => setInput(e.target.value)}
-                    />
-                </ModalBody>
-
-                <ModalFooter>
-                    <HStack spacing="3">
-
-                        <Button onClick={handleJoin} color="purple.400">
-                            Join
-                        </Button>
-                        <Button onClick={() => setOpen(false)}>
-                            Close
-                        </Button>
-
-                    </HStack>
-                </ModalFooter>
-
-            </ModalContent>
-        </Modal>
-    );
 };

@@ -3,8 +3,6 @@ import { CircularProgress } from "@chakra-ui/react";
 import { useEffect, useRef } from "react";
 import ReactPlayer from "react-player/lazy";
 import { ReactPlayerProps } from "react-player";
-import { useHistory } from "react-router";
-import { validate } from "uuid";
 import { useDebouncedCallback } from "use-debounce";
 
 import { socket, SYNC_POW, roomId } from "../../../shared";
@@ -12,9 +10,6 @@ import { SocketRoom, SocketSync, SocketVideo } from "../../../types";
 import { useStore } from "../store";
 
 export default function VideoPlayer(props: ReactPlayerProps) {
-    // react-router-dom hook
-    const history = useHistory();
-    
     // react player ref
     const playerRef = useRef<ReactPlayer>(null);
     // is the player currently playing?
@@ -76,13 +71,8 @@ export default function VideoPlayer(props: ReactPlayerProps) {
             setVideo(video);
         });
     };
-
+    
     useEffect(() => {
-        // validate this room
-        if (!validate(roomId)) {
-            history.push("/404");
-            return;
-        };
         SocketIO();
     }, []);
 
