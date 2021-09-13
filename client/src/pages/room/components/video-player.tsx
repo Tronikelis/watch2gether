@@ -62,7 +62,7 @@ export default function VideoPlayer(props: ReactPlayerProps) {
             if (!seconds) return;
             console.log("got sync", seconds);
 
-            const offset = 0.38; // offset for loading
+            const offset = 0.3; // offset for loading
             // wait a bit before first skip, less buggy
             setTimeout(() => skipTo(seconds + offset), 150);
         });
