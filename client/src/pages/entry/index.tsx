@@ -11,11 +11,8 @@ interface AxiosRes {
 
 const noWords = [
     "BS",
-    "Ads",
-    "Tracking",
     "Fuckery",
     "Crap",
-    "Nonsense",
 ];
 
 export default function Entry() {
