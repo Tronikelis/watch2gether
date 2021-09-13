@@ -57,9 +57,8 @@ export default function VideoPlayer(props: ReactPlayerProps) {
             } as SocketSync);
         });
         // Getting sync
-        socket.on("sync user", ({ seconds, video }: SocketSync) => {
+        socket.on("sync user", ({ seconds = 0, video }: SocketSync) => {
             setVideo(video);
-            if (!seconds) return;
             console.log("got sync", seconds);
 
             const offset = 0.3; // offset for loading
