@@ -60,10 +60,11 @@ export default function VideoPlayer(props: ReactPlayerProps) {
         socket.on("sync user", ({ seconds = 0, video }: SocketSync) => {
             setVideo(video);
             console.log("got sync", seconds);
-
+            
+            //  compare the times, so that we don't do unnecessary skipping
             const approx = Math.abs(getTime() - seconds) < SYNC_POW;
             if (approx) return;
-            
+
             const offset = 0.3; // offset for loading
             // wait a bit before first skip, less buggy
             setTimeout(() => skipTo(seconds + offset), 150);
